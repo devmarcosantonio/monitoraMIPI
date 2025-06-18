@@ -1,7 +1,9 @@
 import TelegramBot from 'node-telegram-bot-api';
-import { differenceInMinutes, parse } from 'date-fns';
+import { differenceInMinutes, parse, format } from 'date-fns';
 import Automate from "./Automacao.js";
 import dotenv from 'dotenv';
+
+import moment from 'moment-timezone';
 
 dotenv.config();
 
@@ -56,7 +58,10 @@ async function executarTarefa() {
         return;
     }
 
-    const horario_atual = new Date();
+    // const horario_atual = new Date();
+    const horario_atual_str = format(moment().tz('America/Sao_Paulo'), 'dd/MM/yyyy HH:mm:ss');
+
+    const horario_atual = parse(horario_atual_str, 'dd/MM/yyyy HH:mm:ss', new Date());
     const data1 = parse(horario_ultima_carga_mipi, 'dd/MM/yyyy HH:mm:ss', new Date());
     const diferenca = differenceInMinutes(horario_atual, data1);
 
