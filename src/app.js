@@ -11,6 +11,7 @@ const telegramToken = process.env.TELEGRAM_TOKEN;
 const bot = new TelegramBot(telegramToken, { polling: true });
 
 const chatId = process.env.TELEGRAM_CHAT_ID;
+const chatId_error = process.env.TELEGRAM_CHAT_ID_ERROR;
 
 const url = process.env.MIPI_URL;
 const username = process.env.MIPI_USER;
@@ -44,6 +45,25 @@ process.on('unhandledRejection', (reason, promise) => {
     }, 5000); // tenta reiniciar após 5 segundos
 });
 
+bot.on('message', (msg) => {
+    console.log('Mensagem recebida:', msg.text);
+    if (!msg.text) {
+        console.log('Mensagem sem texto, ignorando...');
+        return;
+    }
+
+    if (msg.text.toLowerCase() === '/monitorar') {
+        executarTarefa();
+        return;
+    }
+
+});
+
+bot.on('message', (msg) => {
+    console.log('Novo chat_id:', msg.chat.id);
+});
+
+
 
 async function executarTarefa() {
     let tentativas = 0;
@@ -53,7 +73,7 @@ async function executarTarefa() {
     await bot.sendMessage(chatId, '🔎 Hora de monitorar! Vou acessar o MIPI...', { parse_mode: 'HTML' });
     while (tentativas < 4 && !sucesso) {
         // Envia mensagem antes de tentar login
-       
+
 
         try {
             await automate.init();
@@ -103,6 +123,14 @@ async function executarTarefa() {
         statusMsg;
 
     await bot.sendMessage(chatId, mensagem, { parse_mode: 'HTML' });
+
+    if (erroLogin) {
+        await bot.sendMessage(chatId_error, 'Tentei fazer Login 4x e não consegui. Verifique se o sistema estar no ar.', { parse_mode: 'HTML' });
+        return;
+    }
+    if (diferenca >= 15) {
+        await bot.sendMessage(chatId_error, mensagem, { parse_mode: 'HTML' });
+    }
 }
 
 // Executa a tarefa imediatamente ao iniciar
