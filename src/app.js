@@ -2,6 +2,7 @@ import TelegramBot from 'node-telegram-bot-api';
 import { differenceInMinutes, parse } from 'date-fns';
 import Automate from "./Automacao.js";
 import dotenv from 'dotenv';
+import getBrasiliaDate from './horario.js';
 
 dotenv.config();
 
@@ -52,7 +53,7 @@ async function executarTarefa() {
     await bot.sendMessage(chatId, '🔎 Hora de monitorar! Vou acessar o MIPI...', { parse_mode: 'HTML' });
     while (tentativas < 4 && !sucesso) {
         // Envia mensagem antes de tentar login
-
+       
 
         try {
             await automate.init();
@@ -82,14 +83,15 @@ async function executarTarefa() {
         return;
     }
 
-    const horario_atual = new Date();
-    const data1 = parse(horario_ultima_carga_mipi, 'dd/MM/yyyy HH:mm:ss', new Date());
-    const diferenca = differenceInMinutes(horario_atual, data1);
+    // const horario_atual = new Date();
+    const horario_atual = getBrasiliaDate()
+    const horario_carga = parse(horario_ultima_carga_mipi, 'dd/MM/yyyy HH:mm:ss', new Date());
+    const diferenca = differenceInMinutes(horario_atual, horario_carga);
 
     const statusMsg =
-        diferenca > 40
-            ? '🟥 <b>Alerta:</b> A última carga foi registrada há mais de <b>40 minutos</b>!'
-            : diferenca > 15
+        diferenca >= 30
+            ? '🟥 <b>Alerta:</b> A última carga foi registrada há mais de <b>30 minutos</b>!'
+            : diferenca >= 15
                 ? '⚠️ <b>Atenção:</b> A última carga foi registrada há mais de <b>15 minutos</b>!'
                 : '✅ <b>Tudo certo!</b> A última carga foi registrada recentemente.';
 
