@@ -18,15 +18,41 @@ const password = process.env.MIPI_PASS;
 
 const automate = new Automate();
 
+// Captura erros do bot e tenta reiniciar polling
+bot.on('polling_error', (error) => {
+    console.error('Polling error:', error);
+    setTimeout(() => {
+        bot.stopPolling()
+            .then(() => bot.startPolling())
+            .catch(err => console.error('Erro ao reiniciar polling:', err));
+    }, 5000); // tenta reiniciar após 5 segundos
+});
+
+// Captura erros não tratados e tenta reiniciar a tarefa
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    setTimeout(() => {
+        executarTarefa();
+    }, 5000); // tenta reiniciar após 5 segundos
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection:', reason);
+    setTimeout(() => {
+        executarTarefa();
+    }, 5000); // tenta reiniciar após 5 segundos
+});
+
+
 async function executarTarefa() {
     let tentativas = 0;
     let sucesso = false;
     let horario_ultima_carga_mipi = '';
     let erroLogin = false;
-
+    await bot.sendMessage(chatId, '🔎 Hora de monitorar! Vou acessar o MIPI...', { parse_mode: 'HTML' });
     while (tentativas < 4 && !sucesso) {
         // Envia mensagem antes de tentar login
-        await bot.sendMessage(chatId, '🔎 Hora de monitorar! Vou acessar o MIPI...', { parse_mode: 'HTML' });
+
 
         try {
             await automate.init();
